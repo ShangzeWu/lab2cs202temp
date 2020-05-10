@@ -96,6 +96,10 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
 
+  p->retime = 0;
+  p->rutime = 0;
+  p->stime = 0;
+
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -388,39 +392,39 @@ int getTotalTickets(void)
 {
   int result = 0;
   struct proc *p;
-  cprintf(">>>getTotalTickets\n");
+//  cprintf(">>>getTotalTickets\n");
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
     if (p->state!=RUNNABLE)
     {continue;}
 
-    char *stateString = "";
-    switch (p->state) {
-      case UNUSED:
-        stateString = "UNUSED";
-        break;
-      case EMBRYO:
-        stateString = "EMBRYO";
-        break;
-      case SLEEPING:
-        stateString = "SLEEPING";
-        break;
-      case RUNNABLE:
-        stateString = "RUNNABLE";
-        break;
-      case RUNNING:
-        stateString = "RUNNING";
-        break;
-      case ZOMBIE:
-        stateString = "ZOMBIE";
-        break;
-    }
-
-    cprintf("* name: %s, state: %s, tickets: %d\n", p->name, stateString, p->tickets);
+//    char *stateString = "";
+//    switch (p->state) {
+//      case UNUSED:
+//        stateString = "UNUSED";
+//        break;
+//      case EMBRYO:
+//        stateString = "EMBRYO";
+//        break;
+//      case SLEEPING:
+//        stateString = "SLEEPING";
+//        break;
+//      case RUNNABLE:
+//        stateString = "RUNNABLE";
+//        break;
+//      case RUNNING:
+//        stateString = "RUNNING";
+//        break;
+//      case ZOMBIE:
+//        stateString = "ZOMBIE";
+//        break;
+//    }
+//
+//    cprintf("* name: %s, state: %s, tickets: %d\n", p->name, stateString, p->tickets);
     int currT = p->tickets;
     result = result + currT;
   }
-  cprintf("<<<getTotalTickets, result: %d\n", result);
+//  cprintf("<<<getTotalTickets, result: %d\n", result);
   return result;
 }
 
@@ -617,3 +621,34 @@ int set_tickets(int num)
     return 22;
 }
 
+void gettime(void)
+{
+  cprintf("name %s\n", myproc()->name);
+  cprintf("stime %d\n", myproc()->stime);
+  cprintf("retime %d\n", myproc()->retime);
+  cprintf("rutime %d\n", myproc()->rutime);
+  cprintf("total %d\n", myproc()->rutime + myproc()->retime);
+
+
+}
+
+void update_time() {
+  struct proc *p;
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    switch(p->state) {
+      case SLEEPING:
+        p->stime++;
+            break;
+      case RUNNABLE:
+        p->retime++;
+            break;
+      case RUNNING:
+        p->rutime++;
+            break;
+      default:
+        ;
+    }
+  }
+  release(&ptable.lock);
+}

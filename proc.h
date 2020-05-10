@@ -50,6 +50,10 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
 
+  int stime;                   //process SLEEPING time
+  int retime;                  //process READY(RUNNABLE) time
+  int rutime;                  //process RUNNING time
+
   int tickets; //num of tickets proc holds
 };
 
@@ -59,3 +63,4 @@ struct proc {
 //   fixed-size stack
 //   expandable heap
 int getTotalTickets(void);
+void update_time();

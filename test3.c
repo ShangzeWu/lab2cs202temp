@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[])
 {
-    set_tickets(20);
+    set_tickets(10);
     int i,k;
     const int loop=43000;
     for(i=0;i<loop;i++)

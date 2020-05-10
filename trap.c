@@ -1,9 +1,9 @@
 #include "types.h"
-#include "defs.h"
-#include "param.h"
-#include "memlayout.h"
 #include "mmu.h"
+#include "param.h"
 #include "proc.h"
+#include "defs.h"
+#include "memlayout.h"
 #include "x86.h"
 #include "traps.h"
 #include "spinlock.h"
@@ -51,6 +51,7 @@ trap(struct trapframe *tf)
     if(cpuid() == 0){
       acquire(&tickslock);
       ticks++;
+      update_time();
       wakeup(&ticks);
       release(&tickslock);
     }

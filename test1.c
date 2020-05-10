@@ -18,5 +18,6 @@ int main(int argc, char *argv[])
             asm("nop");
         }
     }
+    gettime();
     exit();
 }

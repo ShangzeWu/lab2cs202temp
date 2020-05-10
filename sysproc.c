@@ -101,3 +101,8 @@ int sys_set_tickets(void)
 
   return set_tickets(num);
 }
+
+int sys_gettime(void){
+    gettime();
+    return 0;
+}
