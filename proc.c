@@ -8,6 +8,11 @@
 #include "spinlock.h"
 
 #define DEFAULT_TICKETS 10
+int rand(int max) {
+  static int next = 1;
+  next = next * 1103515245 + 12345;
+  return (unsigned int) (next/65536) % max;
+}
 
 struct {
   struct spinlock lock;
@@ -340,7 +345,25 @@ scheduler(void)
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
+      {
         continue;
+      }
+#if defined(LOTTERY)
+      int totalTickets = getTotalTickets();
+//      cprintf("totalTickets %d \n", totalTickets);
+//      cprintf("pid %d \n", p->pid);
+      int randNum = 0;
+      if(randNum == 0) {
+        randNum = rand(totalTickets + 1);
+      }
+      randNum = randNum - p->tickets;
+
+      if (randNum > 0) {
+        continue; //don't choose current one
+      }
+
+#endif
+
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
@@ -359,6 +382,46 @@ scheduler(void)
     release(&ptable.lock);
 
   }
+}
+
+int getTotalTickets(void)
+{
+  int result = 0;
+  struct proc *p;
+  cprintf(">>>getTotalTickets\n");
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->state!=RUNNABLE)
+    {continue;}
+
+    char *stateString = "";
+    switch (p->state) {
+      case UNUSED:
+        stateString = "UNUSED";
+        break;
+      case EMBRYO:
+        stateString = "EMBRYO";
+        break;
+      case SLEEPING:
+        stateString = "SLEEPING";
+        break;
+      case RUNNABLE:
+        stateString = "RUNNABLE";
+        break;
+      case RUNNING:
+        stateString = "RUNNING";
+        break;
+      case ZOMBIE:
+        stateString = "ZOMBIE";
+        break;
+    }
+
+    cprintf("* name: %s, state: %s, tickets: %d\n", p->name, stateString, p->tickets);
+    int currT = p->tickets;
+    result = result + currT;
+  }
+  cprintf("<<<getTotalTickets, result: %d\n", result);
+  return result;
 }
 
 // Enter scheduler.  Must hold only ptable.lock
@@ -547,7 +610,9 @@ int set_tickets(int num)
         return -1;
     }
     myproc()->tickets = num;
-    cprintf("current tickets %d", myproc()->tickets);
+//  cprintf("in set_tickets %d \n", myproc()->pid);
+
+//  cprintf("current tickets %d\n", myproc()->tickets);
 
     return 22;
 }
