@@ -7,6 +7,8 @@
 #include "proc.h"
 #include "spinlock.h"
 
+#define DEFAULT_TICKETS 10
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -139,6 +141,8 @@ userinit(void)
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
 
+  p->tickets = DEFAULT_TICKETS;
+
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
 
@@ -207,6 +211,8 @@ fork(void)
     if(curproc->ofile[i])
       np->ofile[i] = filedup(curproc->ofile[i]);
   np->cwd = idup(curproc->cwd);
+
+  np->tickets = curproc->tickets;
 
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
@@ -532,3 +538,17 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+int set_tickets(int num)
+{
+
+    if (num %10 != 0 || num < 10 || num > 150)
+    {
+        return -1;
+    }
+    myproc()->tickets = num;
+    cprintf("current tickets %d", myproc()->tickets);
+
+    return 22;
+}
+
