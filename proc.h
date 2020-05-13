@@ -55,6 +55,9 @@ struct proc {
   int rutime;                  //process RUNNING time
 
   int tickets; //num of tickets proc holds
+
+  int passo;    //bu chang
+  int passada;   // yi jing wan cheng de bu chang 
 };
 
 // Process memory is laid out contiguously, low addresses first:

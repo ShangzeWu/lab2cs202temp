@@ -78,7 +78,7 @@ myproc(void) {
 // state required to run in the kernel.
 // Otherwise return 0.
 static struct proc*
-allocproc(void)
+allocproc(int stride)   //tian jia can shu
 {
   struct proc *p;
   char *sp;
@@ -95,6 +95,9 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+
+  p->passo = STRIDER(stride); //fu chu zhi
+  p->passada = 0;            // "0" progress
 
   p->retime = 0;
   p->rutime = 0;
@@ -134,7 +137,7 @@ userinit(void)
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
 
-  p = allocproc();
+  p = allocproc(250);
   
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
@@ -191,14 +194,14 @@ growproc(int n)
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
 int
-fork(void)
+fork(int passo,char epasso)
 {
   int i, pid;
   struct proc *np;
   struct proc *curproc = myproc();
 
   // Allocate process.
-  if((np = allocproc()) == 0){
+  if((np = allocproc((epasso && passo>=25 && passo<= 1000)?passo:250)) == 0){
     return -1;
   }
 
@@ -338,6 +341,12 @@ void
 scheduler(void)
 {
   struct proc *p;
+
+#if defined(STRIDE)
+  struct proc *min;
+  int max;
+#endif
+
   struct cpu *c = mycpu();
   c->proc = 0;
   
@@ -347,11 +356,16 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    for(p = ptable.proc
+#if defined(STRIDE)		    
+		    , max= 4000000, min=0
+#endif
+		    ; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
       {
         continue;
-      }
+      
+
 #if defined(LOTTERY)
       int totalTickets = getTotalTickets();
 //      cprintf("totalTickets %d \n", totalTickets);
@@ -367,7 +381,20 @@ scheduler(void)
       }
 
 #endif
-
+#if defined(STRIDE)
+      if(p->passada < max)
+      {
+	      max=p->passada;
+	      min=p;
+      }
+#endif
+      }
+#if defined(STRIDE)
+      if(min){
+	      min->passada += min->passo;
+	      p=min;
+      }
+#endif
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
